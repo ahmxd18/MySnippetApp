@@ -1,26 +1,35 @@
-import React from "react"
+import { React, useContext, useEffect } from "react"
+import { UserContext } from "../contexts/UserContext"
+import { useNavigate } from "react-router-dom"
+import { infoToast } from "../utils/toast"
+import { HiUser } from "react-icons/hi"
 
-const ProfilePage = () => {
-  // Sample user data (you will typically fetch this from an API)
-  const user = {
-    username: "john_doe",
-    name: "John Doe",
-    email: "john@example.com",
-    password: "********", // Never display raw password, this is just for the example
-    createdAt: "2022-07-18T12:34:56Z",
-    avatar: "🦸‍♂️", // Use an emoji for simplicity, you could replace this with an image or SVG
+const Profile = () => {
+  const { user, setUser } = useContext(UserContext)
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    setUser({})
+    infoToast("You are logged out")
+    navigate("/login")
   }
 
-  // Formatting date
-  const formattedDate = new Date(user.createdAt).toLocaleDateString()
+  useEffect(() => {
+    if (!user?.name) {
+      infoToast("Please login to your account")
+      navigate("/login")
+    }
+  }, [user, navigate])
 
   return (
-    <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg max-w-lg mx-auto">
+    <div className="bg-white text-gray-800 p-6 rounded-lg shadow-lg max-w-lg mx-auto mt-16">
       <div className="flex items-center space-x-4">
-        <div className="text-6xl">{user.avatar}</div> {/* Avatar Emoji */}
+        <div className="text-6xl">
+          <HiUser />
+        </div>
         <div>
-          <h1 className="text-3xl font-semibold">{user.name}</h1>
-          <p className="text-gray-500">@{user.username}</p>
+          <h1 className="text-3xl font-semibold">{user?.name}</h1>
+          <p className="text-gray-500">@{user?.username}</p>
         </div>
       </div>
 
@@ -28,12 +37,18 @@ const ProfilePage = () => {
         <div className="flex justify-between items-center text-sm text-gray-500">
           <p>
             Email:{" "}
-            <span className="font-medium text-gray-900">{user.email}</span>
+            <span className="font-medium text-gray-900">{user?.email}</span>
           </p>
           <p>
-            Joined:{" "}
-            <span className="font-medium text-gray-900">{formattedDate}</span>
+            Password:{" "}
+            <span className="font-medium text-gray-900">
+              {user?.password || ""}
+            </span>
           </p>
+          {/* <p>
+              Joined:{" "}
+              <span className="font-medium text-gray-900">{formattedDate}</span>
+            </p> */}
         </div>
 
         <div className="mt-4">
@@ -42,7 +57,7 @@ const ProfilePage = () => {
           </label>
           <input
             type="password"
-            value={user.password}
+            value={user?.password}
             readOnly
             className="w-full p-2 mt-1 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300"
           />
@@ -55,8 +70,16 @@ const ProfilePage = () => {
           Edit Profile
         </button>
       </div>
+      <div className="mt-6 flex justify-center">
+        <button
+          onClick={handleLogout}
+          className="bg-gray-800 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-300"
+        >
+          Log Out
+        </button>
+      </div>
     </div>
   )
 }
 
-export default ProfilePage
+export default Profile

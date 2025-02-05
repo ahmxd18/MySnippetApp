@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
+import { successToast, errorToast, infoToast } from "../utils/toast"
 
 const Signup = () => {
   const navigate = useNavigate()
@@ -25,10 +26,8 @@ const Signup = () => {
     return REGEX.test(password)
   }
 
-  const handleSubmit = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault()
-    // Handle signup logic
-
     if (
       !formData.name ||
       !formData.email ||
@@ -36,22 +35,22 @@ const Signup = () => {
       !formData.password ||
       !formData.confirmPassword
     ) {
-      alert("All fields are required!")
+      errorToast("All Fields are required")
       return
     }
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords donot match")
+      errorToast("Passwords do not match")
       return
     }
 
     if (formData.password.length < 8) {
-      alert("Minimum 8 characters are required")
+      errorToast("Minimum 8 characters are required")
       return
     }
 
     if (!isPasswordValid(formData.password)) {
-      alert("Password doesn't meet the requirements")
+      errorToast("Password doesn't meet the requirements")
       return
     }
     try {
@@ -63,32 +62,36 @@ const Signup = () => {
       })
 
       if (response.status === 201) {
-        console.log("User created", formData)
+        successToast("Account Created Successfully")
         navigate("/login")
       } else {
-        alert("Something went wrong")
+        errorToast("Something went wrong")
       }
     } catch (error) {
       if (error.response) {
-        alert(`Error: ${error.response.data.message}`)
+        errorToast(`Error: ${error.response.data.message}`)
       } else if (error.request) {
-        alert(`No response from server`)
+        errorToast(`No response from server`)
       } else {
-        alert(`Error ${error.message}`)
+        errorToast(`Error ${error.message}`)
       }
-      console.log(error)
     }
   }
 
+  const handleLoginPress = () => {
+    setFormData({})
+    navigate("/login")
+  }
+
   return (
-    <div className="flex justify-center items-center max-h-screen bg-secondary">
-      <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg w-[28rem] max-h-[70%] overflow-y-auto mt-4">
+    <div className="flex justify-center items-center max-h-screen bg-secondary pt-10">
+      <div className="bg-white px-6 py-2 rounded-lg shadow-lg w-[28rem] max-h-[70%] overflow-y-auto mt-4">
         <h2 className="text-2xl font-heading text-gray-800 mb-3 text-center">
           Create an Account
         </h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSignup}>
           <div className="mb-2">
-            <label htmlFor="name" className="block text-text font-medium mb-1">
+            <label htmlFor="name" className="block text-text font-medium">
               Full Name
             </label>
             <input
@@ -98,15 +101,12 @@ const Signup = () => {
               value={formData.name}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
           </div>
 
           <div className="mb-2">
-            <label
-              htmlFor="username"
-              className="block text-text font-medium mb-1"
-            >
+            <label htmlFor="username" className="block text-text font-medium">
               Username
             </label>
             <input
@@ -116,12 +116,12 @@ const Signup = () => {
               value={formData.username}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
           </div>
 
           <div className="mb-2">
-            <label htmlFor="email" className="block text-text font-medium mb-1">
+            <label htmlFor="email" className="block text-text font-medium">
               Email
             </label>
             <input
@@ -131,15 +131,12 @@ const Signup = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
           </div>
 
           <div className="mb-2">
-            <label
-              htmlFor="password"
-              className="block text-text font-medium mb-1"
-            >
+            <label htmlFor="password" className="block text-text font-medium">
               Password
             </label>
             <input
@@ -149,14 +146,14 @@ const Signup = () => {
               value={formData.password}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
           </div>
 
           <div className="mb-5">
             <label
               htmlFor="confirmPassword"
-              className="block text-text font-medium mb-1"
+              className="block text-text font-medium"
             >
               Confirm Password
             </label>
@@ -167,7 +164,7 @@ const Signup = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
             />
           </div>
 
@@ -178,6 +175,15 @@ const Signup = () => {
             Sign Up
           </button>
         </form>
+        <div className="flex justify-center items-center p-4 gap-4">
+          <h3>Already have an account?</h3>
+          <button
+            className="px-10 py-2 bg-border text-text rounded-lg font-semibold"
+            onClick={handleLoginPress}
+          >
+            Login
+          </button>
+        </div>
       </div>
     </div>
   )

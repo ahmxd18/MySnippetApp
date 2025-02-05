@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom"
 
 const Navbar = () => {
   return (
-    <div className="flex flex-wrap justify-center gap-6 p-4 bg-border">
+    <div className="flex flex-wrap justify-center gap-6 p-4 bg-border fixed top-0 left-0 right-0 mb-4 ">
       <NavLink
         to="/"
         className={({ isActive }) =>
