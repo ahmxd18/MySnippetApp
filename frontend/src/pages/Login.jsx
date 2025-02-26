@@ -1,61 +1,54 @@
-import React, { useContext, useState } from "react"
-import axios from "axios"
+import { React, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { UserContext } from "../contexts/UserContext"
-import { successToast } from "../utils/toast.js"
+import axios from "axios"
+import { useAuth } from "../contexts/AuthProvider"
+// import { successToast } from "../utils/toast.js"
 
 const Login = () => {
-  const { setUser } = useContext(UserContext)
   const [formData, setFormData] = useState({ username: "", password: "" })
   const navigate = useNavigate()
+  const [error, setError] = useState("")
+  const { user, setUser } = useAuth()
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
   }
 
-  const isPasswordValid = (password) => {
-    const REGEX = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%._]).{8,}$/
-    return REGEX.test(password)
-  }
+  // const isPasswordValid = (password) => {
+  //   const REGEX = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%._]).{8,}$/
+  //   return REGEX.test(password)
+  // }
 
   const handleLogin = async (e) => {
     e.preventDefault()
 
-    if (!formData.username || !formData.password) {
-      alert("All fields are required")
-      return
-    }
+    // if (!formData.username || !formData.password) {
+    //   alert("All fields are required")
+    //   return
+    // }
 
-    if (formData.password.length < 8 || !isPasswordValid(formData.password)) {
-      alert("Password specifications not met")
-      return
-    }
+    // if (!isPasswordValid(formData.password)) {
+    //   alert("Password specifications not met")
+    //   return
+    // }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/login", {
-        username: formData.username,
-        password: formData.password,
-      })
+      const response = await axios.post(
+        "http://localhost:5000/auth/login",
+        formData,
+        { withCredentials: true }
+      )
 
       if (response.status === 200) {
-        const userData = response.data.user
-        setUser(userData)
-        successToast("Login Successful")
-        navigate("/profile")
+        setUser(response.data.user)
+        // successToast("Login Successful")
+        navigate("/")
       } else {
-        alert("Something went wrong")
+        setError(response.data.message)
       }
     } catch (error) {
-      if (error.response) {
-        alert(`Error: ${error.response.data.message}`)
-      } else if (error.request) {
-        alert(`No response from server`)
-      } else {
-        alert(`Error ${error.message}`)
-      }
+      console.log(error.message)
     }
   }
 

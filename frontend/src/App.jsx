@@ -6,35 +6,45 @@ import Profile from "./pages/Profile"
 import Snippets from "./pages/Snippets"
 import Login from "./pages/Login"
 import Signup from "./pages/Signup"
-import { UserContextProvider } from "./contexts/UserContext"
-import Toast from "./components/Toast"
-
+// import Toast from "./components/Toast"
+import { ModalProvider } from "./contexts/ModalProvider"
+import { AuthProvider } from "./contexts/AuthProvider"
+import { useAuth } from "./contexts/AuthProvider"
 const App = () => {
   return (
-    <UserContextProvider>
-      <Toast />
-      <Router>
-        <Navbar />
-        <div className="min-h-screen bg-secondary p-4">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/snippets" element={<Snippets />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route
-              path="*"
-              element={
-                <h1 className="text-7xl text-center mt-20 text-text">
-                  404 - Page Not Found
-                </h1>
-              }
-            />
-          </Routes>
-        </div>
-      </Router>
-    </UserContextProvider>
+    <>
+      <AuthProvider>
+        <ModalProvider>
+          <Router>
+            {/* <Toast /> */}
+            <div className="flex flex-col">
+              <Navbar />
+              <div className="mt-14 bg-secondary ">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/snippets" element={<Snippets />} />
+                  <Route
+                    path="/profile"
+                    element={<Profile /> }
+                  />
+                  <Route path="/about" element={<AboutUs />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route
+                    path="*"
+                    element={
+                      <h1 className="text-7xl text-center mt-20 text-text">
+                        404 - Page Not Found
+                      </h1>
+                    }
+                  />
+                </Routes>
+              </div>
+            </div>
+          </Router>
+        </ModalProvider>
+      </AuthProvider>
+    </>
   )
 }
 

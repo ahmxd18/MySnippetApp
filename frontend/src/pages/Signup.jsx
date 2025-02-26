@@ -1,81 +1,72 @@
-import React, { useState } from "react"
 import axios from "axios"
+import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { successToast, errorToast, infoToast } from "../utils/toast"
+import { useAuth } from "../contexts/AuthProvider"
+// import { successToast, errorToast, infoToast } from "../utils/toast"
 
 const Signup = () => {
   const navigate = useNavigate()
-
+  const { user, setUser } = useAuth()
+  const [error, setError] = useState("")
   const [formData, setFormData] = useState({
+    name: "",
     username: "",
     email: "",
     password: "",
     confirmPassword: "",
-    name: "",
   })
 
   const handleChange = (e) => {
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     })
   }
 
-  const isPasswordValid = (password) => {
-    const REGEX = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%._]).{8,}$/
-    return REGEX.test(password)
-  }
+  // const isPasswordValid = (password) => {
+  //   const REGEX = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%._]).{8,}$/
+  //   return REGEX.test(password)
+  // }
 
   const handleSignup = async (e) => {
     e.preventDefault()
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.username ||
-      !formData.password ||
-      !formData.confirmPassword
-    ) {
-      errorToast("All Fields are required")
-      return
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      errorToast("Passwords do not match")
-      return
-    }
-
-    if (formData.password.length < 8) {
-      errorToast("Minimum 8 characters are required")
-      return
-    }
-
-    if (!isPasswordValid(formData.password)) {
-      errorToast("Password doesn't meet the requirements")
-      return
-    }
     try {
-      const response = await axios.post("http://localhost:5000/api/signup", {
-        name: formData.name,
-        email: formData.email,
-        username: formData.username,
-        password: formData.password,
-      })
-
-      if (response.status === 201) {
-        successToast("Account Created Successfully")
-        navigate("/login")
+      const response = await axios.post(
+        "http://localhost:5000/auth/signup",
+        {
+          name: formData.name,
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        },
+        { withCredentials: true }
+      )
+      if (!response.data.success) {
+        setError(response.data.message)
       } else {
-        errorToast("Something went wrong")
+        setUser(response.data.user)
+        navigate("/")
       }
     } catch (error) {
-      if (error.response) {
-        errorToast(`Error: ${error.response.data.message}`)
-      } else if (error.request) {
-        errorToast(`No response from server`)
-      } else {
-        errorToast(`Error ${error.message}`)
-      }
+      // console.log(error)
+      setError(error.response?.data?.message || "Something went wrong") // ✅ Set a string instead of an object
     }
+
+    // if (formData.password !== formData.confirmPassword) {
+    //   errorToast("Passwords do not match")
+    //   return
+    // }
+
+    // if (formData.password.length < 8) {
+    //   errorToast("Minimum 8 characters are required")
+    //   return
+    // }
+
+    // if (!isPasswordValid(formData.password)) {
+    //   errorToast("Password doesn't meet the requirements")
+    //   return
+    // }
   }
 
   const handleLoginPress = () => {
@@ -84,11 +75,12 @@ const Signup = () => {
   }
 
   return (
-    <div className="flex justify-center items-center max-h-screen bg-secondary pt-10">
+    <div className="flex justify-center items-center max-h-screen bg-secondary">
       <div className="bg-white px-6 py-2 rounded-lg shadow-lg w-[28rem] max-h-[70%] overflow-y-auto mt-4">
         <h2 className="text-2xl font-heading text-gray-800 mb-3 text-center">
           Create an Account
         </h2>
+        {error && <h1>{error}</h1>}
         <form onSubmit={handleSignup}>
           <div className="mb-2">
             <label htmlFor="name" className="block text-text font-medium">
