@@ -17,10 +17,6 @@ export const ModalProvider = ({ children }) => {
     setModalData(null)
   }
 
-  // const saveSnippet = (data = {}) => {
-  //   console.log(data)
-  // }
-
   return (
     <ModalContext.Provider
       value={{ isModalOpen, modalData, openModal, closeModal }}

@@ -5,7 +5,15 @@ const SnippetSchema = new mongoose.Schema({
   content: { type: String, required: true },
   tags: [String],
   isPublic: { type: Boolean, default: false },
-  likes: { type: Number, default: 0 },
+  likes: {
+    type: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    default: [],
+  },
   inCollections: [String],
   language: String,
   createdOn: { type: Date, default: Date.now },

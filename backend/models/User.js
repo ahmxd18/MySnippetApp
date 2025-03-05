@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    profilePic: {
+      type: String,
+      default: "1.png", // Or your default image filename
+    },
   },
   { timestamps: true }
 )

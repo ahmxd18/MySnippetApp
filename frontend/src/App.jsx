@@ -1,35 +1,39 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom"
 import Navbar from "./components/Navbar"
+import Footer from "./components/Footer"
 import Home from "./pages/Home"
 import AboutUs from "./pages/AboutUs"
 import Profile from "./pages/Profile"
 import Snippets from "./pages/Snippets"
+import SnippetDetails from "./pages/SnippetDetails"
 import Login from "./pages/Login"
 import Signup from "./pages/Signup"
-// import Toast from "./components/Toast"
+import AIChat from "./pages/AIChat"
+import Social from "./pages/Social"
+import Toast from "./components/Toast"
 import { ModalProvider } from "./contexts/ModalProvider"
 import { AuthProvider } from "./contexts/AuthProvider"
-import { useAuth } from "./contexts/AuthProvider"
 const App = () => {
   return (
     <>
       <AuthProvider>
         <ModalProvider>
           <Router>
-            {/* <Toast /> */}
+            <Toast />
             <div className="flex flex-col">
               <Navbar />
-              <div className="mt-14 bg-secondary ">
+              {/* <div className="mt-20 bg-secondary "> */}
+              <div>
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/snippets" element={<Snippets />} />
-                  <Route
-                    path="/profile"
-                    element={<Profile /> }
-                  />
+                  <Route path="/snippet/details" element={<SnippetDetails />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="/about" element={<AboutUs />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
+                  <Route path="/AIChat" element={<AIChat />} />
+                  <Route path="/social" element={<Social />} />
                   <Route
                     path="*"
                     element={
@@ -40,6 +44,7 @@ const App = () => {
                   />
                 </Routes>
               </div>
+              <Footer />
             </div>
           </Router>
         </ModalProvider>

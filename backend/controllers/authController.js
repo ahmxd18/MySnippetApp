@@ -34,7 +34,7 @@ export const signupUser = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     })
 
     return res.status(201).json({
@@ -43,7 +43,7 @@ export const signupUser = async (req, res) => {
       user: newUser._id,
     })
   } catch (error) {
-    console.log(error)
+    console.error(error)
     res.status(500).json({ success: false, message: error.message })
   }
 }
@@ -76,29 +76,55 @@ export const loginUser = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     })
     return res
       .status(200)
       .json({ success: true, message: "User Logged In", user: userExists._id })
   } catch (error) {
-    console.log(error)
+    console.error(error)
     res.status(500).json({ message: error.message })
   }
 }
 
-export const authenticate = (req, res) => {
-  const token = req.cookies.token
-  if (!token) {
-    return res.status(400).json({ success: false, message: "Not logged in" })
+export const getUser = async (req, res) => {
+  try {
+    const userID = req.params.userID
+    const user = await User.findById(userID).select("-password")
+    if (!user)
+      return res.status(404).json({ success: false, message: "User Not Found" })
+    res.status(200).json({ success: true, user })
+  } catch (error) {
+    console.error(error.message)
+    res.status(500).json({ message: "Server error" })
   }
+}
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(400).json({ success: false, message: "Invalid Token" })
+export const authenticate = async (req, res) => {
+  try {
+    const token = req.cookies.token
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Not logged in" })
     }
-    res.status(200).json({ success: true, user: decoded.id })
-  })
+
+    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+      if (err) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Invalid or Expired Token" })
+      }
+      const user = await User.findById(decoded.id).select("-password")
+      if (!user)
+        return res
+          .status(404)
+          .json({ success: false, message: "User not found" })
+
+      res.status(200).json({ success: true, user: decoded.id })
+    })
+  } catch (error) {
+    console.error("Authentication error:", error.message)
+    res.status(500).json({ success: false, message: "Server error" })
+  }
 }
 
 export const logoutUser = (req, res) => {
@@ -111,5 +137,62 @@ export const logoutUser = (req, res) => {
     return res.status(200).json({ success: true, message: "User Logged out" })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+export const updateUser = async (req, res) => {
+  const { name, currentPassword, newPassword, userID, profilePic } = req.body
+  try {
+    const user = await User.findById(userID)
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" })
+    if (name) user.name = name
+    if (profilePic) user.profilePic = profilePic
+    if (newPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password)
+      if (!isMatch)
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid credentials" })
+
+      user.password = await bcrypt.hash(newPassword, 10)
+    }
+    await user.save()
+
+    const userResponse = user.toObject()
+    delete userResponse.password
+    res.status(200).json({ success: true, user: userResponse })
+  } catch (error) {
+    console.error("Update error:", error.message)
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+export const getLikedByUsers = async (req, res) => {
+  try {
+    const userIDs = req.query.userIDs.split(",")
+    const users = await User.find(
+      {
+        _id: { $in: userIDs },
+      },
+      "name username profilePic"
+    ).lean()
+
+    if (!users)
+      return res
+        .status(404)
+        .json({ success: false, message: "User(s) not found" })
+
+    res.status(200).json({
+      success: true,
+      likedByUsers: users.map((user) => ({
+        name: user.name,
+        username: user.username,
+        profilePic: user.profilePic,
+      })),
+    })
+  } catch (error) {
+    console.error(error.message)
+    res.status(500).json({ message: "Server error" })
   }
 }

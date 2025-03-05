@@ -1,28 +1,31 @@
+import mongoose from "mongoose"
 import Snippet from "../models/Snippet.js"
-export const createSnippet = async (req, res) => {
-  const {
-    title,
-    content,
-    tags,
-    isPublic,
-    language,
-    createdOn,
-    lastEditedOn,
-    userID,
-  } = req.body.snippetData
+import User from "../models/User.js"
 
+export const createSnippet = async (req, res) => {
   try {
+    const {
+      title,
+      content,
+      tags,
+      isPublic,
+      language,
+      userID,
+      // createdOn,
+      // lastEditedOn,
+    } = req.body.snippetData
+
     const newSnippet = new Snippet({
       title,
       content,
       tags,
       isPublic,
-      likes: 0,
-      inCollections: [],
       language,
-      createdOn,
-      lastEditedOn,
       userID,
+      // likes: 0,
+      // inCollections: [],
+      // createdOn,
+      // lastEditedOn,
     })
     await newSnippet.save()
     return res.status(201).json({
@@ -31,13 +34,14 @@ export const createSnippet = async (req, res) => {
       snippet: newSnippet,
     })
   } catch (error) {
+    console.error("Error creating snippet:", error)
     res.status(500).json({ success: false, message: error.message })
   }
 }
 
 export const updateSnippet = async (req, res) => {
-  const { title, content, tags, language, isPublic } = req.body.snippetData
-  const snippetID = req.params.id
+  const { title, content, tags, isPublic, language } = req.body.snippetData
+  const snippetID = req.body.snippetID
   try {
     const updatedSnippet = await Snippet.findByIdAndUpdate(
       snippetID,
@@ -90,6 +94,21 @@ export const getOneSnippet = async (req, res) => {
   }
 }
 
+// export const getSnippetDetails = async (req, res) => {
+//   try {
+//     const snippet = await Snippet.findById(req.params.id)
+//     if (!snippet) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Snippet not found" })
+//     }
+//     res.status(200).json({ success: true, snippet })
+//   } catch (error) {
+//     console.error(error)
+//     res.status(500).json({ success: false, message: "Internal server error" })
+//   }
+// }
+
 export const deleteSnippet = async (req, res) => {
   const { snippetID } = req.body
   try {
@@ -132,5 +151,101 @@ export const addSnippetToCollection = async (req, res) => {
   } catch (error) {
     console.error(error)
     res.status(500).json({ success: false, message: "Internal server error" })
+  }
+}
+
+export const getPublicSnippets = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 10
+    const excludeUserID = mongoose.Types.ObjectId.createFromHexString(
+      req.query.exclude
+    )
+
+    const matchStage = {
+      isPublic: true,
+      ...(excludeUserID && { userID: { $ne: excludeUserID } }),
+    }
+
+    const publicSnippets = await Snippet.aggregate([
+      { $match: matchStage },
+      { $sample: { size: limit } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "userID",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $project: {
+          "user.password": 0, // Exclude sensitive fields
+          "user.email": 0,
+        },
+      },
+    ])
+
+    res.status(200).json({
+      success: true,
+      message: "Random public snippets retrieved",
+      snippets: publicSnippets,
+    })
+  } catch (error) {
+    console.error("Error", error)
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+export const toggleSnippetLike = async (req, res) => {
+  try {
+    const { snippetID, userID } = req.body
+    const snippet = await Snippet.findById(snippetID)
+    if (!snippet)
+      return res
+        .status(404)
+        .json({ success: false, messgae: "Snippet not found" })
+    const userIndex = snippet.likes.indexOf(userID)
+    if (userIndex === -1) {
+      snippet.likes.push(userID)
+    } else {
+      snippet.likes.splice(userIndex, 1)
+    }
+    const updatedSnippet = await snippet.save()
+    res.status(200).json({
+      success: true,
+      likes: updatedSnippet.likes,
+      likeCount: updatedSnippet.likes.length,
+    })
+  } catch (error) {
+    console.error("Error", error)
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+export const getSnippetUser = async (req, res) => {
+  try {
+    const userID = req.query.userID
+    const userData = await User.findById(userID).select(
+      "name username profilePic"
+    )
+    if (!userData)
+      return res.status(404).json({ success: false, message: "User not Found" })
+
+    if (!userData.name || !userData.username || !userData.profilePic)
+      return res.status(404).json({
+        success: false,
+        message: "User does not have Name or Username or ProfilePic",
+      })
+
+    res.status(200).json({
+      success: true,
+      name: userData.name,
+      username: userData.username,
+      profilePic: userData.profilePic,
+    })
+  } catch (error) {
+    console.error("Error", error)
+    res.status(500).json({ success: false, message: error.message })
   }
 }
